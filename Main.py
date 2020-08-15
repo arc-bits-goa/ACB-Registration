@@ -6,7 +6,8 @@ from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem
 import pandas as pd
 import copy
 from os import path
-
+import firebase_admin
+from firebase_admin import credentials
 from ui import Ui_MainWindow, Ui_SecondPage, Ui_PreReq
 
 ACB_BACKLOG_LIST = 'ACBBACKLOG.xls'
@@ -14,6 +15,10 @@ PENDING_COURSE_LIST = 'Pending Courses.xls'
 PREREQ_LIST = 'Pre-requisite.xlsx'
 TIME_TABLE = 'TIMETABLE.xls'
 PENDING_BACKLOG = "Pending Backlog.xls"      #delete this after changing Pending Courses.xls or ACBBACKLOG.xls
+KEY='arc-test-b3eb1-firebase-adminsdk-yugcl-a4c9eb9495.json'
+cred = credentials.Certificate(KEY)
+firebase_admin.initialize_app(cred)
+
 
 main_win = None
 prereqWindow = None
@@ -218,6 +223,25 @@ class SecondPage:
     def setToValidate(self):
         self.ui.pushButton.setText("Validate")
         
+    def firebase(pathh):
+
+        
+
+        
+
+        client=storage.Client()
+        bucket=client.get_bucket('arc-test-b3eb1.appspot.com')
+
+        url=[]
+        onlyfiles = [f for f in listdir("./") if isfile(join("./", f))]
+        onlyfiles = [f for f in onlyfiles if f[:4]=='stu_']
+        for f in onlyfiles:
+            imageBlob=bucket.blob(pathh)
+            imageBlob.upload_from_filename("./"+pathh)
+            url.append(imageBlob.generate_signed_url(expiration=timedelta(500)))
+        print(url)
+        return url
+
     def validate(self):
         if self.ui.pushButton.text() == "Validate":
             l1 = self.checkExamClash()
@@ -240,6 +264,7 @@ class SecondPage:
                 op.loc[i] = [student_id, student_name, courseSection, self.sectionToClassnbr[courseSection]]
             
             op.to_excel("stu_op#" + student_id + ".xls", index = False)
+            firebase("stu_op#" + student_id + ".xls")
             self.ui.listWidgetErrors.addItems(["Saved Successfully !!"])
 
     # def generateOutput(self):
